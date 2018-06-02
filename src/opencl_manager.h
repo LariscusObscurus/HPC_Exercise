@@ -8,20 +8,25 @@ class opencl_manager
 {
     cl::Context context_;
     std::vector<cl::Device> devices_;
-    cl::Kernel kernel_;
+    std::unordered_map<std::string, cl::Kernel> kernels_;
     cl::CommandQueue queue_;
 
     cl_int err_ = CL_SUCCESS;
+    cl::Program program_;
 
 public:
     opencl_manager();
 
-    void load_kernel(const std::string& kernel_file, const std::string& kernel_name);
+    void compile_program(const std::string& kernel_file);
+    void load_kernel(const std::string& kernel_name);
 
     template<typename... Params>
-    void execute_kernel(std::function<void(cl::Context&, cl::CommandQueue&, cl::Kernel, Params...)>& function, Params&&... args)
+    void execute_kernel(const std::string& kernel_name, std::function<void(cl::Context&, cl::CommandQueue&, cl::Kernel& , Params...)>& function, Params&&... args)
     {
-        function(context_, queue_, kernel_, args...);
+        auto kernel = kernels_.find(kernel_name);
+        if (kernel == kernels_.end())
+            throw std::runtime_error("kernel:" + kernel_name + " does not exist.");
+        function(context_, queue_, kernel->second, args...);
     }
 
     int get_error() const { return err_; }

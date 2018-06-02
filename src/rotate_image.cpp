@@ -43,9 +43,11 @@ void write_image(const std::string& file, tga::TGAImage&& image) {
     std::cout << "Image written." << std::endl;
 }
 
-void rotate_image(cl::Context& context, cl::CommandQueue& queue, cl::Kernel kernel, tga::TGAImage& image, const float theta)
+void rotate_image(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, tga::TGAImage& image, const float theta)
 {
     const auto size = image.height * image.width;
+    const auto buffer_size = size * sizeof(pixel);
+
     auto input_image_data = std::vector<pixel>(size);
     auto output_image_data = std::vector<pixel>(size);
 
@@ -59,10 +61,10 @@ void rotate_image(cl::Context& context, cl::CommandQueue& queue, cl::Kernel kern
     }
 
     //clBuffers
-    const auto input_buffer = cl::Buffer(context, CL_MEM_READ_ONLY, size * sizeof(pixel));
-    const auto output_buffer = cl::Buffer(context, CL_MEM_WRITE_ONLY, size * sizeof(pixel));
+    const auto input_buffer = cl::Buffer(context, CL_MEM_READ_ONLY, buffer_size);
+    const auto output_buffer = cl::Buffer(context, CL_MEM_WRITE_ONLY, buffer_size);
 
-    queue.enqueueWriteBuffer(input_buffer, CL_TRUE, 0, size * sizeof(pixel), input_image_data.data());
+    queue.enqueueWriteBuffer(input_buffer, CL_TRUE, 0, buffer_size, input_image_data.data());
 
     kernel.setArg(0, input_buffer);
     kernel.setArg(1, output_buffer);
@@ -81,7 +83,7 @@ void rotate_image(cl::Context& context, cl::CommandQueue& queue, cl::Kernel kern
     }
 
     auto event = cl::Event{};
-    queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, size * sizeof(pixel), &output_image_data[0], nullptr, &event);
+    queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, buffer_size, &output_image_data[0], nullptr, &event);
 
     queue.finish();
     event.wait();

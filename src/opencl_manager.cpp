@@ -29,7 +29,7 @@ opencl_manager::opencl_manager()
     devices_ = context_.getInfo<CL_CONTEXT_DEVICES>();
 }
 
-void opencl_manager::load_kernel(const std::string& kernel_file, const std::string& kernel_name)
+void opencl_manager::compile_program(const std::string& kernel_file)
 {
     std::ifstream source_file(kernel_file);
 
@@ -43,21 +43,31 @@ void opencl_manager::load_kernel(const std::string& kernel_file, const std::stri
         (std::istreambuf_iterator<char>()));
 
     const auto source = cl::Program::Sources(1, std::make_pair(source_code.c_str(), source_code.length() + 1));
-    auto program = cl::Program(context_, source);
+    program_ = cl::Program(context_, source);
 
-    const auto rv = program.build(devices_);
+    const auto rv = program_.build(devices_);
     if (rv != CL_SUCCESS)
     {
-        const auto build_info = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices_[0]);
+        const auto build_info = program_.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices_[0]);
         std::cerr << build_info << std::endl << std::endl;
         std::getchar();
         throw std::runtime_error("Compiling program failed.");
     }
 
     queue_ = cl::CommandQueue(context_, devices_[0], 0, &err_);
-    kernel_ = cl::Kernel(program, kernel_name.c_str(), &err_);
-    if (err_ != CL_SUCCESS)
+}
+
+void opencl_manager::load_kernel(const std::string& kernel_name)
+{
+    auto it = kernels_.find(kernel_name);
+    if (it == kernels_.end())
     {
-        throw std::runtime_error("Kernel creation failed.");
+        kernels_.emplace(std::make_pair(kernel_name, cl::Kernel(program_, kernel_name.c_str(), &err_)));
+        if (err_ != CL_SUCCESS)
+        {
+            throw std::runtime_error("Kernel creation failed.");
+        }
+        return;
     }
+    it->second = std::move(cl::Kernel(program_, kernel_name.c_str(), &err_));
 }

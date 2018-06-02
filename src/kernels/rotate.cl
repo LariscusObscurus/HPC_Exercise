@@ -7,8 +7,8 @@ typedef struct
 
 __kernel
 void rotate_image(
-    __global const pixel* src_data,
-    __global pixel* dest_data,
+    __global const pixel* restrict src_data,
+    __global pixel* restrict dest_data,
     const int width,
     const int height,
     const float sin_theta,

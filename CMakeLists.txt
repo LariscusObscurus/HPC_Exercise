@@ -4,8 +4,10 @@ project(Exercise1)
 find_package(OpenCL REQUIRED)
 
 set(SOURCES  
-	src/main.cpp
 	tga/tga.cpp
+	src/rotate_image.cpp
+	src/opencl_manager.cpp
+	src/main.cpp
 )
 
 set(INCLUDE

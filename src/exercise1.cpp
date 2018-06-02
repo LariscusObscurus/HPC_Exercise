@@ -6,13 +6,8 @@
 #include <rotate_image.h>
 #include <constants/rotation_constants.h>
 
-#define __CL_ENABLE_EXCEPTIONS
-
-
-
 int main(int argc, char* argv[])
 {
-
     auto open_cl = opencl_manager{};
     open_cl.load_kernel(kernel_file, "rotate_image");
 

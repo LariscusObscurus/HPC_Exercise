@@ -1,5 +1,5 @@
 #pragma once
-#define __CL_ENABLE_EXCEPTIONS
+//#define __CL_ENABLE_EXCEPTIONS
 
 #include <CL/cl.hpp>
 #include <functional>
@@ -30,4 +30,10 @@ public:
     }
 
     int get_error() const { return err_; }
+
+    int get_max_workgroup_size()
+    {
+        //TODO: Make adjustable
+        return devices_[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
+    }
 };

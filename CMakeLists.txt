@@ -45,7 +45,7 @@ target_compile_features(Exercise2 PRIVATE cxx_std_17)
 target_link_libraries(Exercise2 OpenCL::OpenCL)
 
 add_custom_command(
-        TARGET Exercise1 POST_BUILD
+        TARGET Exercise2 POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/src/kernels/scan.cl
                 ${CMAKE_CURRENT_BINARY_DIR}/scan.cl)

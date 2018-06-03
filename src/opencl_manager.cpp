@@ -11,18 +11,16 @@ opencl_manager::opencl_manager()
     {
         throw std::runtime_error("No OpenCL platform found");
     }
-    else
-    {
-        std::cout << "Found " << platforms.size() << " platform(s)" << std::endl;
-    }
+
+    std::cout << "Found " << platforms.size() << " platform(s)" << std::endl;
 
     for (auto& platform : platforms)
     {
         std::cout << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
     }
 
+    //TODO: Platforms might need ajustment depending on the PC. 
     cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0};
-    //Platforms might need ajustment depending on the PC
 
     context_ = cl::Context(CL_DEVICE_TYPE_GPU, properties);
 
@@ -48,6 +46,7 @@ void opencl_manager::compile_program(const std::string& kernel_file)
     const auto rv = program_.build(devices_);
     if (rv != CL_SUCCESS)
     {
+        //TODO: Make devices adjustable
         const auto build_info = program_.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices_[0]);
         std::cerr << build_info << std::endl << std::endl;
         std::getchar();

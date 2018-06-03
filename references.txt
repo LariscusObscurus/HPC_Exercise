@@ -1,0 +1,6 @@
+https://www.khronos.org/registry/OpenCL/specs/opencl-cplusplus-1.1.pdf
+https://software.intel.com/en-us/articles/using-opencl-20-work-group-functions
+https://jorudolph.wordpress.com/2012/02/03/opencl-work-item-ids-globalgrouplocal/
+http://www.nehalemlabs.net/prototype/blog/tag/gpu/
+http://www.nehalemlabs.net/prototype/blog/2014/06/23/parallel-programming-with-opencl-and-python-parallel-scan/
+https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html

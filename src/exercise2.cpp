@@ -65,9 +65,10 @@ void gpu_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& ke
     kernel.setArg(3, cl::LocalSpaceArg(cl::Local(local_size)));
 
     const auto offset = cl::NDRange(0);
+    const auto local = cl::NDRange(32);
     const auto global = cl::NDRange(input.size());
 
-    const auto rv = queue.enqueueNDRangeKernel(kernel, offset, global);
+    const auto rv = queue.enqueueNDRangeKernel(kernel, offset, global, local);
     if (rv != CL_SUCCESS)
     {
         throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
@@ -99,7 +100,7 @@ void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, 
     kernel.setArg(3, (int)input.size());
 
     cl::NDRange global(input.size());
-    cl::NDRange local(32); 
+    cl::NDRange local(32);
     cl::NDRange offset(0);
 
     const auto rv = queue.enqueueNDRangeKernel(kernel, offset, global);
@@ -113,9 +114,8 @@ void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, 
     result = queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, output_buffer_size, &output[0], nullptr, &event);
 
     result = queue.finish();
-    result  = event.wait();
+    result = event.wait();
 }
-
 
 int main(int argc, char* argv[])
 {
@@ -156,7 +156,6 @@ int main(int argc, char* argv[])
                 return -1;
             }
         }
-
         std::cout << "GPU Result OK. " << std::endl;
     }
     catch (std::runtime_error ex)

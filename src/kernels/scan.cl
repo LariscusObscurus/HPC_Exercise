@@ -24,7 +24,7 @@ __kernel void naive_parallel_prefixsum(__global int* input,
 
     for (int stride = 1; stride < size; stride <<= 1) {
 
-        if (local_id > (stride - 1)) {
+        if (local_id >= stride) {
             temp_b[local_id] = temp_a[local_id] + temp_a[local_id - stride];
         }
         else {
@@ -32,6 +32,7 @@ __kernel void naive_parallel_prefixsum(__global int* input,
         }
 
         barrier(CLK_LOCAL_MEM_FENCE);
+
         __local int* tmp = temp_a;
         temp_a = temp_b;
         temp_b = tmp;

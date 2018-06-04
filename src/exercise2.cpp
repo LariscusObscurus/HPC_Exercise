@@ -112,18 +112,18 @@ void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, 
         const auto group_count = range / group_size;
         constexpr int local_size = sizeof(int) * group_size;
 
-        auto group_sums = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(int) * group_count);
+        auto group_sums_buffer = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(int) * group_count);
 
         if (array_size <= group_size)
         {
             kernel.setArg(0, input_buffer);
             kernel.setArg(1, output_buffer);
-            kernel.setArg(2, group_sums);
+            kernel.setArg(2, group_sums_buffer);
             kernel.setArg(3, cl::LocalSpaceArg(cl::Local(local_size)));
             kernel.setArg(4, (int)array_size);
 
             auto event = cl::Event{};
-            const auto rv = queue.enqueueNDRangeKernel(kernel, cl::NDRange(0), cl::NDRange(range), cl::NDRange(group_size), nullptr, &event);
+            const auto rv = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(range), cl::NDRange(group_size), nullptr, &event);
             if (rv != CL_SUCCESS)
             {
                 throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
@@ -133,11 +133,11 @@ void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, 
         else
         {
             cl::Buffer scan_output_buffer(context, CL_MEM_READ_WRITE, sizeof(int) * array_size);
-            cl::Buffer add_buffer(context, CL_MEM_READ_WRITE, sizeof(int) * group_count);
+            cl::Buffer add_output_buffer(context, CL_MEM_READ_WRITE, sizeof(int) * group_count);
 
             kernel.setArg(0, input_buffer);
             kernel.setArg(1, scan_output_buffer);
-            kernel.setArg(2, group_sums);
+            kernel.setArg(2, group_sums_buffer);
             kernel.setArg(3, cl::LocalSpaceArg(cl::Local(local_size)));
             kernel.setArg(4, (int)array_size);
 
@@ -150,14 +150,20 @@ void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, 
             }
             auto result = event.wait();
 
-            scan(group_sums, add_buffer, group_count);
+            scan(group_sums_buffer, add_output_buffer, group_count);
 
             //ADD
             auto add_kernel = manager.get_kernel("add_groups");
 
+
+            //DEBUG
+            //std::vector<int> output(array_size);
+            //result = queue.enqueueReadBuffer(scan_output_buffer, CL_TRUE, 0, sizeof(int)* array_size, &output[0], nullptr, &event);
+            //event.wait();
+
             add_kernel.setArg(0, scan_output_buffer);
             add_kernel.setArg(1, output_buffer);
-            add_kernel.setArg(2, add_buffer);
+            add_kernel.setArg(2, add_output_buffer);
 
             event = cl::Event{};
             rv = queue.enqueueNDRangeKernel(add_kernel, cl::NullRange, cl::NDRange(range), cl::NDRange(group_size), nullptr, &event);
@@ -222,6 +228,7 @@ int main(int argc, char* argv[])
     {
         std::cout << ex.what() << std::endl;
     }
+
     std::getchar();
     return 0;
 }

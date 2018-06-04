@@ -43,18 +43,26 @@ __kernel void naive_parallel_prefixsum(__global int* input,
 
 __kernel void blelloch_scan(__global const int* input,
     __global int* output,
+    __global int* group_sum,
     __local int * temp,
     const int items)
 {
     int global_id = get_global_id(0);
     int local_id = get_local_id(0);
+
+    int group_id = get_group_id(0);
+    int group_size = get_local_size(0);
+
     int depth = 1;
 
-    temp[2 * local_id] = input[2 * global_id];
-    temp[2 * local_id + 1] = input[2 * global_id + 1];
+    if (global_id >= items) return;
+
+    temp[local_id] = input[global_id];
+    //temp[2 * local_id] = input[2 * global_id];
+    //temp[2 * local_id + 1] = input[2 * global_id + 1];
 
     //upsweep
-    for (int stride = items >> 1; stride > 0; stride >>= 1) {
+    for (int stride = group_size >> 1; stride > 0; stride >>= 1) {
         barrier(CLK_LOCAL_MEM_FENCE);
 
         if (local_id < stride) {
@@ -67,25 +75,39 @@ __kernel void blelloch_scan(__global const int* input,
     }
 
     if (local_id == 0) {
-        temp[items - 1] = 0;
+        group_sum[group_id] = temp[group_size - 1];
+        temp[group_size - 1] = 0;
     }
 
     //downsweep
-    for (int stride = 1; stride < items; stride <<= 1) {
+    for (int stride = 1; stride < group_size; stride <<= 1) {
         depth >>= 1;
         barrier(CLK_LOCAL_MEM_FENCE);
+
         if (local_id < stride) {
             int i = depth * (2 * local_id + 1) - 1;
             int j = depth * (2 * local_id + 2) - 1;
 
-            int t = temp[i];
-            temp[i] = temp[j];
-            temp[j] += t;
+            int t = temp[j];
+            temp[j] += temp[i];
+            temp[i] = t;
         }
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    output[2 * global_id] = temp[2 * local_id];
-    output[2 * global_id + 1] = temp[2 * local_id + 1];
+    output[group_id] = temp[local_id];
+    //output[2 * global_id] = temp[2 * local_id];
+    //output[2 * global_id + 1] = temp[2 * local_id + 1];
+}
+
+__kernel void add_groups(
+    __global int* input,
+    __global int* output,
+    __global int* sums)
+{
+    int global_id = get_global_id(0);
+    int group_id  = get_group_id(0);
+
+    output[global_id] = input[global_id] + sums[group_id];
 }

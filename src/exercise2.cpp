@@ -81,40 +81,97 @@ void gpu_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& ke
     event.wait();
 }
 
-void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>& input, std::vector<int>& output)
+const auto group_size = 33;
+
+size_t round_for_block(size_t val) {
+        size_t res = val;
+
+        if (val % group_size != 0) {
+            res += group_size- val % group_size;
+        }
+
+        return res;
+}
+
+void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>& input, std::vector<int>& output, const opencl_manager& manager)
 {
     const auto input_buffer_size = input.size() * sizeof(int);
     const auto output_buffer_size = output.size() * sizeof(int);
+    const int local_size = sizeof(int) * group_size;
 
     const auto input_buffer = cl::Buffer(context, CL_MEM_READ_ONLY, input_buffer_size);
     const auto output_buffer = cl::Buffer(context, CL_MEM_READ_WRITE, output_buffer_size);
 
     auto result = queue.enqueueWriteBuffer(input_buffer, CL_TRUE, 0, input_buffer_size, input.data());
+    result = queue.finish();
 
-    kernel.setArg(0, input_buffer);
-    kernel.setArg(1, output_buffer);
+    std::function<void(const cl::Buffer&, const cl::Buffer&, std::size_t)> fun;
 
-    const int local_size = sizeof(int) * input.size();
-    kernel.setArg(2, cl::LocalSpaceArg(cl::Local(local_size)));
-
-    kernel.setArg(3, (int)input.size());
-
-    cl::NDRange global(input.size());
-    cl::NDRange local(32);
-    cl::NDRange offset(0);
-
-    const auto rv = queue.enqueueNDRangeKernel(kernel, offset, global);
-
-    if (rv != CL_SUCCESS)
+    fun = [&context, &queue, &kernel, &manager, local_size, &fun](const cl::Buffer& input_buffer, const cl::Buffer& output_buffer, const std::size_t array_size)
     {
-        throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
-    }
+        auto range = round_for_block(array_size);
+        const auto group_count = range / group_size;
+
+        auto group_sums = cl::Buffer(context, CL_MEM_READ_WRITE, sizeof(int) * group_count);
+        if (array_size <= group_size)
+        {
+            kernel.setArg(0, input_buffer);
+            kernel.setArg(1, output_buffer);
+            kernel.setArg(2, group_sums);
+            kernel.setArg(3, cl::LocalSpaceArg(cl::Local(local_size)));
+            kernel.setArg(4, (int)range);
+
+            auto event = cl::Event{};
+            const auto rv = queue.enqueueNDRangeKernel(kernel, cl::NDRange(0), cl::NDRange(range), cl::NDRange(group_size), nullptr, &event);
+            if (rv != CL_SUCCESS)
+            {
+                throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
+            }
+            auto result = event.wait();
+        }
+        else
+        {
+            cl::Buffer scan_output_buffer(context, CL_MEM_READ_WRITE, sizeof(int) * array_size);
+            cl::Buffer add_buffer(context, CL_MEM_READ_WRITE, sizeof(int) * group_count);
+
+            kernel.setArg(0, input_buffer);
+            kernel.setArg(1, scan_output_buffer);
+            kernel.setArg(2, group_sums);
+            kernel.setArg(3, cl::LocalSpaceArg(cl::Local(local_size)));
+            kernel.setArg(4, (int)range);
+
+            auto event = cl::Event{};
+
+            auto rv = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(range), cl::NDRange(group_size), nullptr, &event);
+            if (rv != CL_SUCCESS)
+            {
+                throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
+            }
+            auto result = event.wait();
+
+            fun(group_sums, add_buffer, group_count);
+
+            //ADD
+            auto add_kernel = manager.get_kernel("add_groups");
+
+            add_kernel.setArg(0, scan_output_buffer);
+            add_kernel.setArg(1, output_buffer);
+            add_kernel.setArg(2, add_buffer);
+
+            event = cl::Event{};
+            rv = queue.enqueueNDRangeKernel(add_kernel, cl::NullRange, cl::NDRange(range), cl::NDRange(group_size), nullptr, &event);
+            if (rv != CL_SUCCESS)
+            {
+                throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
+            }
+            result = event.wait();
+        }
+    };
+
+    fun(input_buffer, output_buffer, input.size());
 
     auto event = cl::Event{};
     result = queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, output_buffer_size, &output[0], nullptr, &event);
-
-    result = queue.finish();
-    result = event.wait();
 }
 
 int main(int argc, char* argv[])
@@ -126,6 +183,7 @@ int main(int argc, char* argv[])
         open_cl.compile_program("scan.cl");
         open_cl.load_kernel("single_workgroup_prefixsum");
         open_cl.load_kernel("blelloch_scan");
+        open_cl.load_kernel("add_groups");
         open_cl.load_kernel("naive_parallel_prefixsum");
 
         //Fill test vector
@@ -138,13 +196,14 @@ int main(int argc, char* argv[])
         auto result = sequential_scan(test);
 
         std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>&, std::vector<int>&)> fun = gpu_prefixsum;
+        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>&, std::vector<int>&, opencl_manager&)> workefficient_scan = gpu_workefficient_prefixsum;
 
         auto output = std::vector<int>(test.size());
         //open_cl.execute_kernel("single_workgroup_prefixsum", fun, test, output);
-        //open_cl.execute_kernel("blelloch_scan", fun, test, output);
+        open_cl.execute_kernel("blelloch_scan", workefficient_scan, test, output, open_cl);
 
-        open_cl.execute_kernel("naive_parallel_prefixsum", fun, test, output);
-        output.insert(output.begin(), 0);//only for naive because it is a non inclusive scan
+        //open_cl.execute_kernel("naive_parallel_prefixsum", fun, test, output);
+        //output.insert(output.begin(), 0);//only for naive because it is a non inclusive scan
 
         for (auto i = 0; i < test.size(); ++i)
         {

@@ -29,6 +29,11 @@ public:
         function(context_, queue_, kernel->second, args...);
     }
 
+    cl::Kernel get_kernel(const std::string& kernel_name) const
+    {
+        return kernels_.find(kernel_name)->second;
+    }
+
     int get_error() const { return err_; }
 
     int get_max_workgroup_size()

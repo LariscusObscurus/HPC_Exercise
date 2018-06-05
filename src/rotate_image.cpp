@@ -73,10 +73,9 @@ void rotate_image(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& ker
     kernel.setArg(4, sinf(theta));
     kernel.setArg(5, cosf(theta));
 
-    const auto offset = cl::NDRange(0);
     const auto global = cl::NDRange(image.width, image.height);
 
-    const auto rv = queue.enqueueNDRangeKernel(kernel, offset, global);
+    const auto rv = queue.enqueueNDRangeKernel(kernel, cl::NullRange, global);
     if (rv != CL_SUCCESS)
     {
         throw std::runtime_error("Could not enqueue kernel.");

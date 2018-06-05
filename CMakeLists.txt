@@ -37,6 +37,7 @@ add_custom_command(
 set(SOURCES_EXERCISE2
 	src/opencl_manager.cpp
 	src/exercise2.cpp
+	src/prefix_sum.cpp
 )
 
 add_executable(Exercise2 ${SOURCES_EXERCISE2})

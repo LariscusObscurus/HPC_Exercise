@@ -58,7 +58,6 @@ __kernel void blelloch_scan(__global const int* input,
     if (global_id >= items) return;
 
     temp[local_id] = input[global_id];
-    temp[local_id + 1] = input[global_id + 1];
 
     //upsweep
     for (uint stride = group_size >> 1; stride > 0; stride >>= 1) {
@@ -97,7 +96,6 @@ __kernel void blelloch_scan(__global const int* input,
     barrier(CLK_LOCAL_MEM_FENCE);
 
     output[global_id] = temp[local_id];
-    output[global_id + 1] = temp[local_id + 1];
 }
 
 __kernel void add_groups(

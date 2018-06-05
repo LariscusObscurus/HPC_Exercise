@@ -155,11 +155,10 @@ void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, 
             //ADD
             auto add_kernel = manager.get_kernel("add_groups");
 
-
             //DEBUG
-            //std::vector<int> output(array_size);
-            //result = queue.enqueueReadBuffer(scan_output_buffer, CL_TRUE, 0, sizeof(int)* array_size, &output[0], nullptr, &event);
-            //event.wait();
+            std::vector<int> output(array_size);
+            result = queue.enqueueReadBuffer(scan_output_buffer, CL_TRUE, 0, sizeof(int)* array_size, &output[0], nullptr, &event);
+            event.wait();
 
             add_kernel.setArg(0, scan_output_buffer);
             add_kernel.setArg(1, output_buffer);

@@ -50,3 +50,21 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/src/kernels/scan.cl
                 ${CMAKE_CURRENT_BINARY_DIR}/scan.cl)
+
+set(SOURCES_EXERCISE3
+	src/opencl_manager.cpp
+	src/exercise3.cpp
+	src/prefix_sum.cpp
+	src/stream_compact.cpp
+)
+
+add_executable(Exercise3 ${SOURCES_EXERCISE3})
+target_include_directories(Exercise3 PRIVATE ${INCLUDE})
+target_compile_features(Exercise3 PRIVATE cxx_std_17)
+target_link_libraries(Exercise3 OpenCL::OpenCL)
+
+add_custom_command(
+        TARGET Exercise3 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/src/kernels/stream_compact.cl
+                ${CMAKE_CURRENT_BINARY_DIR}/stream_compact.cl)

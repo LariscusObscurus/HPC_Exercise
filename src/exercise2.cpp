@@ -18,12 +18,72 @@ void print_vector(std::vector<T> vector)
     std::cout << "]" << std::endl;
 }
 
-std::chrono::nanoseconds measure_runtime(){
-	const auto start_time = std::chrono::steady_clock::now();
+bool check_result(const std::vector<int> expected_data, const std::vector<int> actual_data)
+{
+    for (auto i = 0; i < expected_data.size(); ++i)
+    {
+        if (expected_data[i] != actual_data[i])
+        {
+            std::cout << "At pos " << i << " Result was: " << actual_data[i] << " Should be: " << expected_data[i] << std::endl;
 
-	const auto end_time = std::chrono::steady_clock::now();
-	const auto diff = end_time - start_time;
-	return diff;
+            return false;
+        }
+    }
+    std::cout << "Result OK. " << std::endl;
+
+    return true;
+}
+
+template<typename T>
+int measure_runtime(std::function<T> func) {
+    const auto start_time = std::chrono::steady_clock::now();
+
+    func();
+
+    const auto end_time = std::chrono::steady_clock::now();
+    const auto diff = end_time - start_time;
+    return std::chrono::duration<double, std::milli>(diff).count();
+}
+
+void test_sequential(const std::vector<int>& test_data)
+{
+    std::cout << "Testing sequential sum: " << std::endl;
+
+    std::function<std::vector<int>()> test_function = [&] { return sequential_scan(test_data); };;
+    auto result = measure_runtime(test_function);
+
+    std::cout << "Result: " << result << " ms" << std::endl;
+}
+
+void test_workefficient_gpu(opencl_manager& open_cl, const std::vector<int>& test_data)
+{
+    std::cout << "Testing Blelloch sum: " << std::endl;
+    auto output = std::vector<int>(test_data.size());
+
+    std::function<void()> test_function = [&]() {
+        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>&, std::vector<int>&, const opencl_manager&)> workefficient_scan = gpu_workefficient_prefixsum;
+
+        open_cl.execute_kernel<const std::vector<int>&, std::vector<int>&, const opencl_manager&>("blelloch_scan", workefficient_scan, test_data, output, open_cl);
+    };
+
+    auto result = measure_runtime(test_function);
+    std::cout << "Result: " << result << " ms" << std::endl;
+
+}
+
+void test_naive_gpu(opencl_manager& open_cl, const std::vector<int>& test_data)
+{
+    std::cout << "Testing Naive sum: " << std::endl;
+    auto output = std::vector<int>(test_data.size());
+
+    std::function<void()> test_function = [&]() {
+        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>&, std::vector<int>&)> fun = gpu_prefixsum;
+
+        open_cl.execute_kernel("naive_parallel_prefixsum", fun, test_data, output); 
+    };
+
+    auto result = measure_runtime(test_function);
+    std::cout << "Result: " << result << " ms" << std::endl;
 }
 
 
@@ -46,28 +106,10 @@ int main(int argc, char* argv[])
 
         auto test = std::vector<int>{};
         sequential_fill_vector(items, test);
-        auto result = sequential_scan(test);
 
-        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>&, std::vector<int>&)> fun = gpu_prefixsum;
-        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>&, std::vector<int>&, opencl_manager&)> workefficient_scan = gpu_workefficient_prefixsum;
-
-        auto output = std::vector<int>(test.size());
-        //open_cl.execute_kernel("single_workgroup_prefixsum", fun, test, output);
-        open_cl.execute_kernel("blelloch_scan", workefficient_scan, test, output, open_cl);
-        //open_cl.execute_kernel("naive_parallel_prefixsum", fun, test, output);
-        //output.insert(output.begin(), 0);//only for naive because it is a non inclusive scan
-
-        for (auto i = 0; i < test.size(); ++i)
-        {
-            if (result[i] != output[i])
-            {
-                std::cout << "At pos " << i << " Result was: " << output[i] << " Should be: " << result[i] << std::endl;
-
-                std::getchar();
-                return -1;
-            }
-        }
-        std::cout << "GPU Result OK. " << std::endl;
+        test_sequential(test);
+        test_workefficient_gpu(open_cl, test);
+        test_naive_gpu(open_cl, test);
     }
     catch (std::runtime_error ex)
     {

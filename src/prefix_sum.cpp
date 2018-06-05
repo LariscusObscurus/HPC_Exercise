@@ -33,7 +33,7 @@ std::vector<int> sequential_scan(std::vector<int> input)
     return result;
 }
 
-void gpu_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>& input, std::vector<int>& output)
+void gpu_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>& input, std::vector<int>& output)
 {
     const auto input_buffer_size = input.size() * sizeof(int);
     const auto output_buffer_size = output.size() * sizeof(int);
@@ -78,7 +78,7 @@ size_t round_for_block(size_t val) {
     return res;
 }
 
-void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, std::vector<int>& input, std::vector<int>& output, const opencl_manager& manager)
+void gpu_workefficient_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>& input, std::vector<int>& output, const opencl_manager& manager)
 {
     const auto input_buffer_size = input.size() * sizeof(int);
     const auto output_buffer_size = output.size() * sizeof(int);

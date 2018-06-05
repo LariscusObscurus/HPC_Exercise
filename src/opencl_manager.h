@@ -26,7 +26,7 @@ public:
         auto kernel = kernels_.find(kernel_name);
         if (kernel == kernels_.end())
             throw std::runtime_error("kernel:" + kernel_name + " does not exist.");
-        function(context_, queue_, kernel->second, args...);
+        function(context_, queue_, kernel->second, std::forward<Params>(args)...);
     }
 
     cl::Kernel get_kernel(const std::string& kernel_name) const

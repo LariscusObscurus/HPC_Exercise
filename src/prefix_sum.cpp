@@ -50,23 +50,47 @@ void gpu_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& ke
     kernel.setArg(2, cl::LocalSpaceArg(cl::Local(local_size)));
     kernel.setArg(3, cl::LocalSpaceArg(cl::Local(local_size)));
 
-    const auto offset = cl::NDRange(0);
-    const auto local = cl::NDRange(32);
-    const auto global = cl::NDRange(input.size());
 
-    const auto rv = queue.enqueueNDRangeKernel(kernel, offset, global, local);
+    auto event = cl::Event{};
+    auto rv = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(input.size()), cl::NDRange(group_size), nullptr, &event);
     if (rv != CL_SUCCESS)
     {
         throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
     }
 
-    auto event = cl::Event{};
     queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, output_buffer_size, &output[0], nullptr, &event);
 
     queue.finish();
     event.wait();
 }
 
+void gpu_prefixsum2(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>& input, std::vector<int>& output)
+{
+    const auto input_buffer_size = input.size() * sizeof(int);
+    const auto output_buffer_size = output.size() * sizeof(int);
+    const int local_size = sizeof(int) * input.size();
+
+    const auto input_buffer = cl::Buffer(context, CL_MEM_READ_ONLY, input_buffer_size);
+    const auto output_buffer = cl::Buffer(context, CL_MEM_READ_WRITE, output_buffer_size);
+
+    queue.enqueueWriteBuffer(input_buffer, CL_TRUE, 0, input_buffer_size, input.data());
+
+    kernel.setArg(0, input_buffer);
+    kernel.setArg(1, output_buffer);
+    kernel.setArg(2, cl::LocalSpaceArg(cl::Local(local_size)));
+
+    auto event = cl::Event{};
+    auto rv = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(input.size()), cl::NDRange(group_size), nullptr, &event);
+    if (rv != CL_SUCCESS)
+    {
+        throw std::runtime_error("Could not enqueue kernel. Return value was:  " + std::to_string(rv));
+    }
+
+    queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, output_buffer_size, &output[0], nullptr, &event);
+
+    queue.finish();
+    event.wait();
+}
 
 size_t round_for_block(size_t val) {
     auto res = val;

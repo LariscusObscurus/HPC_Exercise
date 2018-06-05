@@ -86,6 +86,21 @@ void test_naive_gpu(opencl_manager& open_cl, const std::vector<int>& test_data)
     std::cout << "Result: " << result << " ms" << std::endl;
 }
 
+void test_naive_gpu2(opencl_manager& open_cl, const std::vector<int>& test_data, const std::vector<int>& expected_data)
+{
+    std::cout << "Testing Naive sum: " << std::endl;
+    auto output = std::vector<int>(test_data.size());
+
+    std::function<void()> test_function = [&]() {
+        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>&, std::vector<int>&)> fun = gpu_prefixsum;
+
+        open_cl.execute_kernel("naive_parallel_prefixsum2", fun, test_data, output); 
+    };
+
+    auto result = measure_runtime(test_function);
+    std::cout << "Result: " << result << " ms" << std::endl;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -98,6 +113,7 @@ int main(int argc, char* argv[])
         open_cl.load_kernel("blelloch_scan");
         open_cl.load_kernel("add_groups");
         open_cl.load_kernel("naive_parallel_prefixsum");
+        open_cl.load_kernel("naive_parallel_prefixsum2");
 
         //Fill test vector
 
@@ -107,9 +123,12 @@ int main(int argc, char* argv[])
         auto test = std::vector<int>{};
         sequential_fill_vector(items, test);
 
+
         test_sequential(test);
-        test_workefficient_gpu(open_cl, test);
-        test_naive_gpu(open_cl, test);
+        auto expected_data = sequential_scan(test);
+        //test_workefficient_gpu(open_cl, test);
+        //test_naive_gpu(open_cl, test);
+        test_naive_gpu2(open_cl, test, expected_data);
     }
     catch (std::runtime_error ex)
     {
@@ -119,3 +138,4 @@ int main(int argc, char* argv[])
     std::getchar();
     return 0;
 }
+

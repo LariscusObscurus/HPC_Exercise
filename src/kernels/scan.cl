@@ -40,6 +40,38 @@ __kernel void naive_parallel_prefixsum(__global int* input,
     output[global_id] = temp_a[local_id];
 }
 
+__kernel
+void naive_parallel_prefixsum2(
+    __global const int * restrict input,
+    __global int * output,
+    __local int* temp)
+{
+    int global_id = get_global_id(0);
+    int local_id = get_local_id(0);
+    int size = get_local_size(0);
+
+    int pout = 0;
+    int pin = 1;
+
+    // Load input into temp memory.  
+    temp[pout * size + local_id] = input[global_id];
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    for (uint offset = 1; offset < size; offset <<= 1)
+    {
+        pout = 1 - pout; // swap double buffer indices  
+        pin = 1 - pout;
+
+        if (local_id >= offset)
+            temp[pout * size + local_id] = temp[pin* size + local_id] + temp[pin* size + local_id - offset];
+        else
+            temp[pout * size + local_id] = temp[pin* size + local_id];
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+
+    output[global_id] = temp[pout * size + local_id]; // write output  
+}
 
 __kernel void blelloch_scan(__global const int* input,
     __global int* output,

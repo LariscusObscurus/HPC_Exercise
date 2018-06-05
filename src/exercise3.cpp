@@ -1,8 +1,21 @@
-
 #include "opencl_manager.h"
 #include <iostream>
 #include "stream_compact.h"
 #include "prefix_sum.h"
+
+void sequential_compact( const std::vector<int>& input, std::vector<int>& output) 
+{
+    output.resize(input.size());
+
+	unsigned int j = 0;
+	for (auto it : input)
+	{
+		if (it > 10) {
+			output[j] = input[it];
+			j++;
+		}
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -19,6 +32,10 @@ int main(int argc, char* argv[])
 
         auto test = std::vector<int>();
         sequential_fill_vector(items, test);
+
+        auto expected_result = std::vector<int>(test.size());
+        sequential_compact(test, expected_result);
+
 
         std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>&, std::vector<int>&)> func = stream_compact;
 

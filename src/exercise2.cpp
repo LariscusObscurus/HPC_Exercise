@@ -70,9 +70,7 @@ void test_workefficient_gpu(opencl_manager& open_cl, const std::vector<int>& tes
 
 	auto result = measure_runtime(test_function);
 
-	//std::cout << "Expected: "; print_vector(expected_data);
-	//std::cout << "Result: "; print_vector(output);
-	//std::cout << (std::equal(output.begin(), output.end(), expected_data.begin()) ? "Result is correct" : "Result is INCORRECT") << std::endl;
+	std::cout << (std::equal(output.begin(), output.end(), expected_data.begin()) ? "Result is correct" : "Result is INCORRECT") << std::endl;
 	std::cout << "Elapsed time: " << result << " ms" << std::endl;
 
 }
@@ -90,8 +88,6 @@ void test_naive_gpu(opencl_manager& open_cl, const std::vector<int>& test_data, 
 
 	auto result = measure_runtime(test_function);
 
-	std::cout << "Expected: "; print_vector(expected_data);
-	std::cout << "Result: "; print_vector(output);
 	std::cout << (std::equal(output.begin(), output.end(), expected_data.begin()) ? "Result is correct" : "Result is INCORRECT") << std::endl;
 	std::cout << "Elapsed time: " << result << " ms" << std::endl;
 }
@@ -109,8 +105,6 @@ void test_naive_gpu2(opencl_manager& open_cl, const std::vector<int>& test_data,
 
     auto result = measure_runtime(test_function);
 
-	std::cout << "Expected: "; print_vector(expected_data);
-	std::cout << "Result: "; print_vector(output);
 	std::cout << (std::equal(output.begin(), output.end(), expected_data.begin()) ? "Result is correct" : "Result is INCORRECT") << std::endl;
     std::cout << "Elapsed time: " << result << " ms" << std::endl;
 }
@@ -127,25 +121,26 @@ int main(int argc, char* argv[])
         open_cl.load_kernel("naive_parallel_prefixsum");
         open_cl.load_kernel("naive_parallel_prefixsum2");
 
+        const auto items = 1024 * 256;
+
         //Fill test vector
-		//auto threads = open_cl.get_max_workgroup_size(); 
-		auto threads = group_size*16;
-        auto items = 1024; //* 1024 * 32;
-
         auto test = std::vector<int>{};
-        sequential_fill_vector(items, test);
+        random_fill_vector(items, test);
 
-			
-		std::function<std::vector<int>()> test_function = [&] {return sequential_scan_exclusive(test); };;
-		auto result = measure_runtime(test_function);
-		std::cout << "Elapsed time: " << result << " ms" << std::endl;
-		auto expected_data_inclusive = sequential_scan_inclusive(test);
 
-        //test_sequential(test);
+        const auto expected_data_inclusive = sequential_scan_inclusive(test);
+        const auto expected_data_exclusive = sequential_scan_exclusive(test);
 
-		test_naive_gpu(open_cl, test, expected_data_inclusive);
-		test_naive_gpu2(open_cl, test,expected_data_inclusive);
-		test_workefficient_gpu(open_cl, test, std::vector<int>{});
+        test_sequential(test);
+
+        if (items <= 1024 * 4) {
+            test_naive_gpu(open_cl, test, expected_data_inclusive);
+            test_naive_gpu2(open_cl, test, expected_data_inclusive);
+        } else
+        {
+            std::cout << "Too big" << std::endl;
+        }
+		test_workefficient_gpu(open_cl, test, expected_data_exclusive);
     }
     catch (std::runtime_error ex)
     {

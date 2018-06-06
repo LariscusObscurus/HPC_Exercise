@@ -37,29 +37,39 @@ Alle Aufgaben wurden mit CPP implementiert. Öffnen/Starten des Projektes in Vis
 
 			Vektorgrößen: 256 (work group size), 1024 (*4), 4096 (*16)
 		--Performance;
+			Tested on:
+				NVIDIA Geforce 1070 8GB
+				Intel Core i7-6700K @ 4.00GHz 
+				32GB RAM
+
+				using a workgroup size of 1024.
+
 			sequentiell;
-				256: correct (1ms)
-				1024: correct (1ms)
-				4096: correct (2ms)
-				256*1024: correct (84ms)
+				1024: correct (0ms)
+				4096: correct (0ms)
+				256*1024: correct (3ms)
+				1024*1024*32: correct (484ms)
+				100000000: correct(1495ms)
+
 			naive_parallel_prefixsum(Naive Parallel Scan - inclusive);
-				256: correct (1ms)
-				1024: INCORRECT (1ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben
-				4096: INCORRECT (2ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben
+				1024: correct (1ms)
+				4096: INCORRECT (1ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben
 				Ab einer gewissen Inputlänge werden die genutzten Buffer zu groß(cl_out_of_resources)			
+
 			naive_parallel_prefixsum2(Naive Parallel Scan with double buffer - inclusive);
-				256: Output ist eine vector mit Nullen?
-				1024: INCORRECT (1ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben
-				4096: INCORRECT (2ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben	
+				1024: correct (0ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben
+				4096: INCORRECT (1ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben	
 				Ab einer gewissen Inputlänge werden die genutzten Buffer zu groß(cl_out_of_resources)
+
 			blelloch_scan(Work-Efficient Parallel Scan after Blelloch - exclusive);
-				256: correct (1ms)
-				1024: correct (2ms)
-				4096: correct (2ms)
-				256*1024: correct (9ms)
-				blelloch ist etwas langsamer als der naive approach, liefert dafür richtige ergebnisse
+				1024: correct (1ms)
+				4096: correct (1ms)
+				256*1024: correct (4ms)
+				1024*1024*32: correct(164ms)
+				100000000: correct(469ms)
+
 		--Aufgetretene Probleme;
-			Algorithmen verstehen (viel Zeit & Rumprobieren nötig)
+			Algorithmen verstehen (viel Zeit & Herumprobieren nötig)
 			Einige IndexOutOfBounds-Fehler
 			Tlw. Fehler die nur in NVIDIA auftraten
 			Kurzzeitig wurde das erste Element des nächsten Blocks mit dem letzten Element des vorherigen Blocks gefüllt ("off-by-one error")

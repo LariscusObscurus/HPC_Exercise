@@ -5,3 +5,4 @@ void gpu_prefixsum2(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& k
 std::vector<int> sequential_scan_inclusive(std::vector<int> input);
 std::vector<int> sequential_scan_exclusive(std::vector<int> input);
 void sequential_fill_vector(const int size, std::vector<int>& v);
+void random_fill_vector(const int size, std::vector<int>& v);

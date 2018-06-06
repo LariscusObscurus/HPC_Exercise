@@ -102,7 +102,7 @@ void test_naive_gpu2(opencl_manager& open_cl, const std::vector<int>& test_data,
     auto output = std::vector<int>(test_data.size());
 
     std::function<void()> test_function = [&]() {
-        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>&, std::vector<int>&)> fun = gpu_prefixsum;
+        std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>&, std::vector<int>&)> fun = gpu_prefixsum2;
 
         open_cl.execute_kernel("naive_parallel_prefixsum2", fun, test_data, output); 
     };
@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
         //Fill test vector
 		//auto threads = open_cl.get_max_workgroup_size(); 
 		auto threads = group_size*16;
-        auto items = 1024 * 1024 * 32;
+        auto items = 1024; //* 1024 * 32;
 
         auto test = std::vector<int>{};
         sequential_fill_vector(items, test);
@@ -139,12 +139,12 @@ int main(int argc, char* argv[])
 		std::function<std::vector<int>()> test_function = [&] {return sequential_scan_exclusive(test); };;
 		auto result = measure_runtime(test_function);
 		std::cout << "Elapsed time: " << result << " ms" << std::endl;
-		//auto expected_data_inclusive = sequential_scan_inclusive(test);
+		auto expected_data_inclusive = sequential_scan_inclusive(test);
 
         //test_sequential(test);
 
-		//test_naive_gpu(open_cl, test, expected_data_inclusive);
-		//test_naive_gpu2(open_cl, test, expected_data_inclusive);
+		test_naive_gpu(open_cl, test, expected_data_inclusive);
+		test_naive_gpu2(open_cl, test,expected_data_inclusive);
 		test_workefficient_gpu(open_cl, test, std::vector<int>{});
     }
     catch (std::runtime_error ex)

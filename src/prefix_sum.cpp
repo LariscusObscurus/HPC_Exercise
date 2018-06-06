@@ -85,7 +85,7 @@ void gpu_prefixsum2(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& k
 {
     const auto input_buffer_size = input.size() * sizeof(int);
     const auto output_buffer_size = output.size() * sizeof(int);
-    const int local_size = sizeof(int) * input.size();
+    const int local_size = sizeof(int) * group_size * 2;
 
     const auto input_buffer = cl::Buffer(context, CL_MEM_READ_ONLY, input_buffer_size);
     const auto output_buffer = cl::Buffer(context, CL_MEM_READ_WRITE, output_buffer_size);
@@ -94,7 +94,7 @@ void gpu_prefixsum2(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& k
 
     kernel.setArg(0, input_buffer);
     kernel.setArg(1, output_buffer);
-    kernel.setArg(2, cl::LocalSpaceArg(cl::Local(local_size)));
+    kernel.setArg(2, cl::LocalSpaceArg(cl::Local(local_size))); //FIXME: Why 
 
     auto event = cl::Event{};
     auto rv = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(input.size()), cl::NDRange(group_size), nullptr, &event);

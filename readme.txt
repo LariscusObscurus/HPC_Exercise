@@ -9,8 +9,8 @@ Alle Aufgaben wurden mit CPP implementiert. Öffnen/Starten des Projektes in Vis
 		Ergebnisbilder stimmen
 		--Inputs;
 			lenna.tga (225x225px)
-			Inquisition.tga (2000x3100px) - nicht in Abgabe (23MB Filesize)
-			lizard.tga (4444x3136px) - nicht in Abgabe (40MB Filesize)
+			Inquisition.tga (2000x3100px)
+			lizard.tga (4444x3136px)
 			Theta: π/4 (45 Grad)
 		--Performance;
 			lenna.tga;
@@ -82,5 +82,6 @@ Alle Aufgaben wurden mit CPP implementiert. Öffnen/Starten des Projektes in Vis
 		--Inputs;
 			Vektor mit aufsteigenden Integern
 		--Performance; 
-			
+			-
 		--Aufgetretene Probleme;
+			Wenn die Inputlänge die Work Group Size nicht übersteigt, funktioniert der Algorithmus. Für die Umstellung auf mehrere Work Groups mangelt es leider an Zeit und Muse.

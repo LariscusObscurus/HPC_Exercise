@@ -29,12 +29,19 @@ Alle Aufgaben wurden mit CPP implementiert. Öffnen/Starten des Projektes in Vis
 	-Exercise 2;
 		Aufgabe wurde vollständig gelöst, für jeden Algorithmus wurde ein eigener Kernel erstellt. Zur Kontrolle wurde ein sequentielle Algorithmus erstellt.
 		--Inputs/Kernels;
+			Input: Vektor mit aufsteigenden Integern
+
 			naive_parallel_prefixsum(Naive Parallel Scan)
 			naive_parallel_prefixsum2(Double-buffered Naive Parallel Scan)
 			blelloch_scan(Work-Efficient Parallel Scan after Blelloch)
 
 			Vektorgrößen: 256 (work group size), 1024 (*4), 4096 (*16)
 		--Performance;
+			sequentiell;
+				256: correct (1ms)
+				1024: correct (1ms)
+				4096: correct (2ms)
+				256*1024: correct (84ms)
 			naive_parallel_prefixsum(Naive Parallel Scan - inclusive);
 				256: correct (1ms)
 				1024: INCORRECT (1ms) => An Workgroupgrenze wird letzter Wert nicht weitergegeben
@@ -59,7 +66,7 @@ Alle Aufgaben wurden mit CPP implementiert. Öffnen/Starten des Projektes in Vis
 			naive_parallel_prefixsum2 hat bei einer inputlänge von 256 nur 0er zurückgeliefert
 	-Exercise 3;
 		--Inputs;
-
-		--Performance;
-
+			Vektor mit aufsteigenden Integern
+		--Performance; 
+			
 		--Aufgetretene Probleme;

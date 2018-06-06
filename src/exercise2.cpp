@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
 
         //Fill test vector
 		//auto threads = open_cl.get_max_workgroup_size(); 
-		auto threads = group_size;
+		auto threads = group_size*16;
         auto items = threads;
 
         auto test = std::vector<int>{};
@@ -141,8 +141,8 @@ int main(int argc, char* argv[])
         //test_sequential(test);
 
 		//test_naive_gpu(open_cl, test, expected_data_inclusive);
-		test_naive_gpu2(open_cl, test, expected_data_inclusive);
-        //test_workefficient_gpu(open_cl, test, expected_data_exclusive);
+		//test_naive_gpu2(open_cl, test, expected_data_inclusive);
+        test_workefficient_gpu(open_cl, test, expected_data_exclusive);
     }
     catch (std::runtime_error ex)
     {

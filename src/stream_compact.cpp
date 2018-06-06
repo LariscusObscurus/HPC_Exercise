@@ -30,3 +30,11 @@ void stream_compact(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& k
     queue.finish();
     event.wait();
 }
+
+bool isPrime(int n) {
+	for (int i = 2; i <= n/2; i++) {
+		if (n%i > 0)
+			return false;
+	}
+	return true;
+}

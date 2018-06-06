@@ -3,6 +3,17 @@
 #include "stream_compact.h"
 #include "prefix_sum.h"
 
+template<typename T>
+void print_vector(std::vector<T> vector)
+{
+	std::cout << "[(size: " << vector.size() << ") ";
+	for (auto& it : vector)
+	{
+		std::cout << it << " ";
+	}
+	std::cout << "]" << std::endl;
+}
+
 void sequential_compact( const std::vector<int>& input, std::vector<int>& output) 
 {
     output.resize(input.size());
@@ -10,6 +21,8 @@ void sequential_compact( const std::vector<int>& input, std::vector<int>& output
 	unsigned int j = 0;
 	for (auto it : input)
 	{
+		//it & (it-1)==0 // power of two
+		//isPrime(it) // is prime number
 		if (it > 10) {
 			output[j] = input[it];
 			j++;
@@ -27,7 +40,7 @@ int main(int argc, char* argv[])
         open_cl.load_kernel("compact");
 
         //Fill test vector
-        auto threads = open_cl.get_max_workgroup_size();
+        auto threads = 256;
         auto items = threads;
 
         auto test = std::vector<int>();
@@ -42,6 +55,8 @@ int main(int argc, char* argv[])
         auto output = std::vector<int>(test.size());
         open_cl.execute_kernel<const std::vector<int>&, std::vector<int>&>("compact", func, test, output); 
 
+		print_vector(expected_result);
+		print_vector(output);
     }
     catch (std::runtime_error ex)
     {

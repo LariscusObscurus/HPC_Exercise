@@ -20,7 +20,7 @@ tga::TGAImage load_tga_image(const std::string& file)
     }
     return image;
 }
-
+ 
 tga::TGAImage create_tga_image(const tga::TGAImage& original, std::vector<pixel> image_data) {
     auto image = tga::TGAImage();
     image.height = original.height;
@@ -88,4 +88,36 @@ void rotate_image(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& ker
     event.wait();
 
     write_image(output_image_file, create_tga_image(image, output_image_data));
+}
+
+void rotate_image_seq(tga::TGAImage& image, const float theta) {
+	const auto size = image.height * image.width;
+
+	auto input_image_data = std::vector<pixel>(size);
+	auto output_image_data = std::vector<pixel>(size);
+
+	auto j = 0;
+	for (auto i = 0; i < size * 3; i += 3)
+	{
+		input_image_data[j].r = image.imageData[i];
+		input_image_data[j].g = image.imageData[i + 1];
+		input_image_data[j].b = image.imageData[i + 2];
+		j++;
+	}
+	 
+	const float sin_theta = sinf(theta);
+	const float cos_theta = cosf(theta);
+
+	for (int ix = 0; ix < image.width; ix++) {
+		for (int iy = 0; iy < image.height; iy++) {
+			float xpos = (((float)ix - image.width / 2)*cos_theta - ((float)iy - image.height / 2)*sin_theta) + (image.width / 2);
+			float ypos = (((float)ix - image.width / 2)*sin_theta + ((float)iy - image.height / 2)*cos_theta) + (image.height / 2);
+
+			if ((((int)xpos >= 0) && ((int)xpos < image.width)) && ((ypos >= 0) && ((int)ypos < image.height)))
+			{
+				output_image_data[iy*image.width + ix] = input_image_data[(int)(floor(ypos)*image.width + floor(xpos))];
+			}
+		}
+	}
+	write_image(output_image_file, create_tga_image(image, output_image_data));
 }

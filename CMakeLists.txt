@@ -15,7 +15,7 @@ set(INCLUDE
 	src
 )
 
-
+  
 add_executable(Exercise1 ${SOURCES_EXERCISE1})
 target_include_directories(Exercise1 PRIVATE ${INCLUDE})
 target_compile_features(Exercise1 PRIVATE cxx_std_17)
@@ -26,6 +26,18 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/assets/lenna.tga
                 ${CMAKE_CURRENT_BINARY_DIR}/lenna.tga)
+
+add_custom_command(
+        TARGET Exercise1 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/assets/Inquisition.tga
+                ${CMAKE_CURRENT_BINARY_DIR}/Inquisition.tga)
+
+add_custom_command(
+        TARGET Exercise1 POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/assets/lizard.tga
+                ${CMAKE_CURRENT_BINARY_DIR}/lizard.tga)
 
 add_custom_command(
         TARGET Exercise1 POST_BUILD

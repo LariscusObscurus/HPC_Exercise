@@ -9,3 +9,4 @@ namespace cl {
 
 tga::TGAImage load_tga_image(const std::string& file);
 void rotate_image(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, tga::TGAImage& image, float theta);
+void rotate_image_seq(tga::TGAImage& image, const float theta);

@@ -37,10 +37,11 @@ int main(int argc, char* argv[])
 
         auto open_cl = opencl_manager{};
         open_cl.compile_program("stream_compact.cl");
-        open_cl.load_kernel("compact");
+		open_cl.load_kernel("compact");
+		open_cl.load_kernel("compactArbitrary");
 
         //Fill test vector
-        auto threads = 256;
+        auto threads = 512;
         auto items = threads;
 
         auto test = std::vector<int>();
@@ -51,9 +52,9 @@ int main(int argc, char* argv[])
 
 
         std::function<void(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>&, std::vector<int>&)> func = stream_compact;
-
+		 
         auto output = std::vector<int>(test.size());
-        open_cl.execute_kernel<const std::vector<int>&, std::vector<int>&>("compact", func, test, output); 
+        open_cl.execute_kernel<const std::vector<int>&, std::vector<int>&>("compactArbitrary", func, test, output); 
 
 		print_vector(expected_result);
 		print_vector(output);

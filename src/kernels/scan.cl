@@ -10,7 +10,8 @@ void single_workgroup_prefixsum(
     }
 }
 
-__kernel void naive_parallel_prefixsum(__global int* input,
+__kernel 
+void naive_parallel_prefixsum(__global int* input,
     __global int* output,
     __local int* temp_a,
     __local int* temp_b)
@@ -24,7 +25,7 @@ __kernel void naive_parallel_prefixsum(__global int* input,
 
     for (int stride = 1; stride < size; stride <<= 1) {
 
-        if (local_id >= stride) {
+		if (local_id >= stride) {
             temp_b[local_id] = temp_a[local_id] + temp_a[local_id - stride];
         }
         else {

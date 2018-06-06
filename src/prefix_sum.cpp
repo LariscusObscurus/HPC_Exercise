@@ -23,14 +23,29 @@ void sequential_fill_vector(const int size, std::vector<int>& v)
 
 //scanl (+) 0 [1..5]
 // [0,1,3,6,10,15]
-std::vector<int> sequential_scan(std::vector<int> input)
+std::vector<int> sequential_scan_inclusive(std::vector<int> input)
 {
-    auto result = std::vector<int>{ 0 };
-    for (auto& it : input)
+	std::vector<int>result;
+    for (int i=0; i<input.size(); i++)
     {
-        result.emplace_back(result.back() + it);
+		auto it = input[i];
+		if (i > 0)
+			result.emplace_back(result.back() + it);
+		else
+			result.emplace_back(it);
     }
     return result;
+}
+
+std::vector<int> sequential_scan_exclusive(std::vector<int> input)
+{
+	auto result = std::vector<int>{ 0 };
+	for (auto& it : input)
+	{
+		result.emplace_back(result.back() + it);
+	}
+	result.pop_back();
+	return result;
 }
 
 void gpu_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& kernel, const std::vector<int>& input, std::vector<int>& output)
@@ -59,6 +74,8 @@ void gpu_prefixsum(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& ke
     }
 
     queue.enqueueReadBuffer(output_buffer, CL_TRUE, 0, output_buffer_size, &output[0], nullptr, &event);
+
+
 
     queue.finish();
     event.wait();

@@ -50,6 +50,8 @@ Alle Aufgaben wurden mit CPP implementiert. Öffnen/Starten des Projektes in Vis
 				256*1024: correct (3ms)
 				1024*1024*32: correct (484ms)
 				100000000: correct(1495ms)
+				1024*1024*512: correct (7082ms)
+				1024*1024*1024: correct (26244ms)
 
 			naive_parallel_prefixsum(Naive Parallel Scan - inclusive);
 				1024: correct (1ms)
@@ -67,6 +69,8 @@ Alle Aufgaben wurden mit CPP implementiert. Öffnen/Starten des Projektes in Vis
 				256*1024: correct (4ms)
 				1024*1024*32: correct(164ms)
 				100000000: correct(469ms)
+				1024*1024*512: correct (2595ms)
+				1024*1024*1024: cl_out_of_resources
 
 		--Aufgetretene Probleme;
 			Algorithmen verstehen (viel Zeit & Herumprobieren nötig)

@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
         open_cl.load_kernel("naive_parallel_prefixsum");
         open_cl.load_kernel("naive_parallel_prefixsum2");
 
-        const auto items = 1024 * 256;
+        const auto items = 1024 * 1024 * 1024;
 
         //Fill test vector
         auto test = std::vector<int>{};

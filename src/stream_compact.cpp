@@ -13,10 +13,7 @@ void stream_compact(cl::Context& context, cl::CommandQueue& queue, cl::Kernel& k
     kernel.setArg(0, input_buffer);
     kernel.setArg(1, output_buffer);
 
-    const int local_size = sizeof(int) * input.size();
-    kernel.setArg(2, cl::LocalSpaceArg(cl::Local(local_size)));
-    kernel.setArg(3, cl::LocalSpaceArg(cl::Local(local_size)));
-
+    kernel.setArg(2, input.size());
 
     auto event = cl::Event{};
     auto rv = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(input.size()), cl::NDRange(256), nullptr, &event);
